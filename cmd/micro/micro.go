@@ -291,6 +291,7 @@ func exit(rc int) {
 }
 
 func main() {
+
 	defer func() {
 		if util.Stdout.Len() > 0 {
 			fmt.Fprint(os.Stdout, util.Stdout.String())

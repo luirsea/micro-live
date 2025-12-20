@@ -2,6 +2,7 @@ package config
 
 const (
 	DoubleClickThreshold = 400 // How many milliseconds to wait before a second click is not a double click
+	LiveCommandThreshold = 1000
 )
 
 var Bindings map[string]map[string]string

@@ -1116,6 +1116,33 @@ func (h *BufPane) Search(str string, useRegex bool, searchDown bool) error {
 	return nil
 }
 
+// LH TODO make a dedicated action for transforms
+func (h *BufPane) SpawnMultiCursorSelect() bool {
+
+	eventCallback := func(resp string) {
+	}
+
+	findCallback := func(resp string, cancelled bool) {
+
+		lc := NewLiveCommand(h.Buf, resp)
+		outbuf, err := lc.Exec(h.Buf, 1)
+
+		if err != nil {
+			InfoBar.Error(err)
+		} else {
+
+			width, height := screen.Screen.Size()
+			iOffset := config.GetInfoBarOffset()
+			tp := NewTabFromBuffer(0, 0, width, height-iOffset, outbuf)
+			Tabs.AddTab(tp)
+			Tabs.SetActive(len(Tabs.List) - 1)
+		}
+
+	}
+	InfoBar.Prompt("Tranform:", "", "Transform", eventCallback, findCallback)
+	return true
+}
+
 func (h *BufPane) find(useRegex bool) bool {
 	h.searchOrig = h.Cursor.Loc
 	prompt := "Find: "
@@ -2203,40 +2230,6 @@ func (h *BufPane) SpawnMultiCursorUp() bool {
 // SpawnMultiCursorDown creates additional cursor, at the same X (if possible), one Y more.
 func (h *BufPane) SpawnMultiCursorDown() bool {
 	return h.SpawnMultiCursorUpN(-1)
-}
-
-// SpawnMultiCursorSelect adds a cursor at the beginning of each line of a selection
-func (h *BufPane) SpawnMultiCursorSelect() bool {
-	// Avoid cases where multiple cursors already exist, that would create problems
-	if h.Buf.NumCursors() > 1 {
-		return false
-	}
-
-	var startLine int
-	var endLine int
-
-	a, b := h.Cursor.CurSelection[0].Y, h.Cursor.CurSelection[1].Y
-	if a > b {
-		startLine, endLine = b, a
-	} else {
-		startLine, endLine = a, b
-	}
-
-	if h.Cursor.HasSelection() {
-		h.Cursor.ResetSelection()
-		h.Cursor.GotoLoc(buffer.Loc{0, startLine})
-
-		for i := startLine; i <= endLine; i++ {
-			c := buffer.NewCursor(h.Buf, buffer.Loc{0, i})
-			c.StoreVisualX()
-			h.Buf.AddCursor(c)
-		}
-		h.Buf.MergeCursors()
-	} else {
-		return false
-	}
-	InfoBar.Message("Added cursors from selection")
-	return true
 }
 
 // MouseMultiCursor is a mouse action which puts a new cursor at the mouse position,
