@@ -1119,27 +1119,29 @@ func (h *BufPane) Search(str string, useRegex bool, searchDown bool) error {
 // LH TODO make a dedicated action for transforms
 func (h *BufPane) SpawnMultiCursorSelect() bool {
 
+	tc := NewTransformChain(h.Buf)
+	tc.UpdateDisplay()
+
+	t := time.Now()
+
 	eventCallback := func(resp string) {
-	}
 
-	findCallback := func(resp string, cancelled bool) {
+		if time.Since(t)/time.Millisecond > config.TransformThreshold {
 
-		lc := NewLiveCommand(h.Buf, resp)
-		outbuf, err := lc.Exec(h.Buf, 1)
+			updated, err := tc.Exec(resp)
 
-		if err != nil {
-			InfoBar.Error(err)
-		} else {
+			if updated {
+				tc.UpdateDisplay()
+			}
 
-			width, height := screen.Screen.Size()
-			iOffset := config.GetInfoBarOffset()
-			tp := NewTabFromBuffer(0, 0, width, height-iOffset, outbuf)
-			Tabs.AddTab(tp)
-			Tabs.SetActive(len(Tabs.List) - 1)
+			if err != nil {
+				h.Buf.Insert(buffer.Loc{0, 0}, "<"+err.Error()+">")
+			}
 		}
-
+		t = time.Now()
 	}
-	InfoBar.Prompt("Tranform:", "", "Transform", eventCallback, findCallback)
+
+	InfoBar.Prompt("Tranform:", "", "Transform", eventCallback, nil)
 	return true
 }
 

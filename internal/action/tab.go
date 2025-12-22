@@ -75,6 +75,11 @@ func (t *TabList) RemoveTab(id uint64) {
 	}
 }
 
+func (t *TabList) RemoveAll() {
+	t.List = make([]*Tab, 0)
+	t.SetActive(0)
+}
+
 // Resize resizes all elements within the tab list
 // One thing to note is that when there is only 1 tab
 // the tab bar should not be drawn so resizing must take

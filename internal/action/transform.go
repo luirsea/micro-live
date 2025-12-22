@@ -15,43 +15,45 @@ type CommandType int
 const (
 	NilCommand = iota
 	Grep
+	Sed
 	Unknown
 )
 
-// A LiveCommand contains information about how to execute a live bash command
-type LiveCommand struct {
-	raw    string
-	cType  CommandType
-	args   string
-	outBuf *buffer.Buffer
+// A Transform contains information about how to execute a live bash command
+type Transform struct {
+	raw   string
+	cType CommandType
+	args  string
 }
 
-func NewLiveCommand(buf *buffer.Buffer, raw string) *LiveCommand {
-	l := new(LiveCommand)
+func NewTransform(raw string) *Transform {
+	t := new(Transform)
 
-	l.raw = raw
+	t.raw = raw
 
 	split := strings.SplitN(raw, " ", 2)
 
 	if len(split) < 2 {
-		l.cType = Unknown
+		t.cType = Unknown
 	} else {
-		switch split[0] {
+		switch strings.ToLower(split[0]) {
 		case "grep":
-			l.cType = Grep
-			l.args = split[1]
+			t.cType = Grep
+			t.args = split[1]
+		case "sed":
+			t.cType = Sed
+			t.args = split[1]
 		default:
-			l.cType = Unknown
+			t.cType = Unknown
 		}
 	}
-	l.outBuf = buf
-	return l
+
+	return t
 }
 
-func (lc *LiveCommand) Exec(inBuf *buffer.Buffer, n int) (outBuf *buffer.Buffer, err error) {
-
+func (t *Transform) Exec(inBuf *buffer.Buffer, n int) (outBuf *buffer.Buffer, err error) {
 	var cmd *exec.Cmd
-	if cmd, err = lc.getCmd(); err != nil {
+	if cmd, err = t.getCmd(); err != nil {
 		return
 	}
 
@@ -61,6 +63,11 @@ func (lc *LiveCommand) Exec(inBuf *buffer.Buffer, n int) (outBuf *buffer.Buffer,
 	}
 
 	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return
+	}
+
+	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		return
 	}
@@ -78,19 +85,32 @@ func (lc *LiveCommand) Exec(inBuf *buffer.Buffer, n int) (outBuf *buffer.Buffer,
 	outBuf = buffer.NewBuffer(stdout, 0, "", buffer.BTDefault, *new(buffer.Command))
 	outBuf.SetName(fmt.Sprintf("[%d]%s", n, inBuf.GetName()))
 
+	slurp, _ := io.ReadAll(stderr)
+
 	err = cmd.Wait()
+
+	// An exit code of 1 is not an error for grep, it just means no matches
+	if exitErr, ok := err.(*exec.ExitError); ok && t.cType == Grep && exitErr.ExitCode() == 1 {
+		err = nil
+	}
+
+	if err != nil {
+		err = errors.New(err.Error() + ":" + string(slurp) + ":" + outBuf.Line(0))
+	}
 
 	return
 }
 
-func (lc *LiveCommand) getCmd() (*exec.Cmd, error) {
+func (t *Transform) getCmd() (*exec.Cmd, error) {
 	var cmd exec.Cmd
 
 	// command types are checked so that command specific behavior can be defined (eg grep colouring matches)
-	switch lc.cType {
+	switch t.cType {
 	case Grep:
 		// LH TODO enable grep colouring matches
-		cmd = *exec.Command("grep", lc.args)
+		cmd = *exec.Command("grep", t.args)
+	case Sed:
+		cmd = *exec.Command("sed", t.args)
 	default:
 		return nil, errors.New("Unknown command")
 	}
