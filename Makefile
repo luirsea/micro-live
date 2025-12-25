@@ -29,6 +29,9 @@ build-quick:
 build-dbg:
 	CGO_ENABLED=$(CGO_ENABLED) go build -trimpath -ldflags "$(ADDITIONAL_GO_LINKER_FLAGS) $(DEBUGVAR)" ./cmd/micro
 
+build-vscode:
+	CGO_ENABLED=$(CGO_ENABLED) go build -gcflags="all=-N -l" -ldflags "$(ADDITIONAL_GO_LINKER_FLAGS) $(DEBUGVAR)" ./cmd/micro
+
 build-tags: fetch-tags build
 
 build-all: build
