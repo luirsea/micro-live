@@ -38,7 +38,8 @@ func (tc *Transform_Chain) Exec(tcS string) (updated bool, err error) {
 	for i := 1; i < len(transStrings); i++ {
 
 		if i >= len(tc.transforms) ||
-			transStrings[i] != tc.transforms[i].tran.raw {
+			!tc.transforms[i].tran.Matches(transStrings[i]) {
+
 			t := NewTransform(transStrings[i])
 
 			// Here is the chain, the output of the previous transform is the input for the next one

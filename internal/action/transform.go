@@ -27,6 +27,8 @@ type Transform struct {
 }
 
 func NewTransform(raw string) *Transform {
+	raw = strings.TrimSpace(raw)
+
 	t := new(Transform)
 
 	t.raw = raw
@@ -115,4 +117,8 @@ func (t *Transform) getCmd() (*exec.Cmd, error) {
 		return nil, errors.New("Unknown command")
 	}
 	return &cmd, nil
+}
+
+func (t *Transform) Matches(raw string) bool {
+	return strings.TrimSpace(raw) == strings.TrimSpace(t.raw)
 }

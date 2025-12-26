@@ -2,8 +2,6 @@
 See `LH TODO`s in code as well
 
 ## Bugs
-- Transform chains with more then one transform dont seem to work
-- Grep isn't finding any matches
 
 ## Now
 - Support for more transform types
