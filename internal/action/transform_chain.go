@@ -4,8 +4,6 @@ import (
 	"strings"
 
 	"github.com/zyedidia/micro/v2/internal/buffer"
-	"github.com/zyedidia/micro/v2/internal/config"
-	"github.com/zyedidia/micro/v2/internal/screen"
 )
 
 type Transform_Chain struct {
@@ -23,7 +21,7 @@ func NewTransformChain(baseBuff *buffer.Buffer) *Transform_Chain {
 	return &Transform_Chain{transforms: ts}
 }
 
-func (tc *Transform_Chain) Exec(tcS string) (updated bool, err error) {
+func (tc *Transform_Chain) UpdateTransform(tcS string) (updated bool, err error) {
 	// LH TODO This is a bit of a hack, could be better
 	// Prepend pipe for the starting nil transform
 	tcS = "|" + tcS
@@ -62,28 +60,4 @@ func (tc *Transform_Chain) Exec(tcS string) (updated bool, err error) {
 
 	updated = chain_err == nil
 	return updated, chain_err
-}
-
-func (tc *Transform_Chain) UpdateDisplay() {
-
-	active := Tabs.Active()
-	n := len(Tabs.List)
-	// LH TODO this must be inefficient
-	Tabs.RemoveAll()
-
-	width, height := screen.Screen.Size()
-	iOffset := config.GetInfoBarOffset()
-
-	for _, tb := range tc.transforms {
-		tp := NewTabFromBuffer(0, 0, width, height-iOffset, tb.outBuf)
-		Tabs.AddTab(tp)
-	}
-
-	if n >= len(tc.transforms) &&
-		active < len(tc.transforms) {
-		// LH TODO this is somewhat nieve, could be a totally different transform be we are showing it anyway
-		Tabs.SetActive(active)
-	} else {
-		Tabs.SetActive(len(Tabs.List) - 1)
-	}
 }

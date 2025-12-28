@@ -441,10 +441,10 @@ func defaultFileFormat() string {
 	return "unix"
 }
 
-func GetInfoBarOffset() int {
+func GetGlobalBarsOffset() int {
 	offset := 0
 	if GetGlobalOption("infobar").(bool) {
-		offset++
+		offset += 2
 	}
 	if GetGlobalOption("keymenu").(bool) {
 		offset += 2

@@ -127,7 +127,7 @@ func (h *BufPane) RetabCmd(args []string) {
 // is receiving in real-time
 func (h *BufPane) RawCmd(args []string) {
 	width, height := screen.Screen.Size()
-	iOffset := config.GetInfoBarOffset()
+	iOffset := config.GetGlobalBarsOffset()
 	tp := NewTabFromPane(0, 0, width, height-iOffset, NewRawPane(nil))
 	Tabs.AddTab(tp)
 	Tabs.SetActive(len(Tabs.List) - 1)
@@ -551,7 +551,7 @@ func (h *BufPane) EvalCmd(args []string) {
 // If no file is given, it opens an empty buffer in a new tab
 func (h *BufPane) NewTabCmd(args []string) {
 	width, height := screen.Screen.Size()
-	iOffset := config.GetInfoBarOffset()
+	iOffset := config.GetGlobalBarsOffset()
 	if len(args) > 0 {
 		for _, a := range args {
 			b, err := buffer.NewBufferFromFile(a, buffer.BTDefault)

@@ -496,6 +496,7 @@ func DoEvent() {
 	}
 	action.MainTab().Display()
 	action.InfoBar.Display()
+	action.TransBar.Display()
 	screen.Screen.Show()
 
 	// Check for new events
@@ -537,6 +538,8 @@ func DoEvent() {
 		if resize {
 			action.InfoBar.HandleEvent(event)
 			action.Tabs.HandleEvent(event)
+		} else if action.TransBar.HasFocus {
+			action.TransBar.HandleEvent(event)
 		} else if action.InfoBar.HasPrompt {
 			action.InfoBar.HandleEvent(event)
 		} else {

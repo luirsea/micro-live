@@ -1,0 +1,104 @@
+package display
+
+import (
+	runewidth "github.com/mattn/go-runewidth"
+	"github.com/micro-editor/tcell/v2"
+	"github.com/zyedidia/micro/v2/internal/buffer"
+	"github.com/zyedidia/micro/v2/internal/config"
+	"github.com/zyedidia/micro/v2/internal/screen"
+	"github.com/zyedidia/micro/v2/internal/transforms"
+	"github.com/zyedidia/micro/v2/internal/util"
+)
+
+type TransWindow struct {
+	*transforms.TransBuf
+	*View
+
+	hscroll int
+}
+
+func NewTransWindow(b *transforms.TransBuf) *TransWindow {
+	tw := new(TransWindow)
+	tw.TransBuf = b
+	tw.View = new(View)
+
+	tw.Width, tw.Y = screen.Screen.Size()
+	tw.Y--
+
+	return tw
+}
+
+func (t *TransWindow) Resize(w, h int) {
+	t.Width = w
+	t.Y = h
+}
+
+func (t *TransWindow) SetBuffer(b *buffer.Buffer) {
+	t.TransBuf.Buffer = b
+}
+
+func (t *TransWindow) Relocate() bool   { return false }
+func (t *TransWindow) GetView() *View   { return t.View }
+func (t *TransWindow) SetView(v *View)  {}
+func (t *TransWindow) SetActive(b bool) {}
+func (t *TransWindow) IsActive() bool   { return true }
+
+func (t *TransWindow) LocFromVisual(vloc buffer.Loc) buffer.Loc {
+	c := t.TransBuf.GetActiveCursor()
+	l := t.TransBuf.LineBytes(0)
+	n := util.CharacterCountInString(t.TransBuf.Arg)
+	return buffer.Loc{c.GetCharPosInLine(l, vloc.X-n), 0}
+}
+
+func (t *TransWindow) BufView() View {
+	return View{
+		X:         0,
+		Y:         t.Y,
+		Width:     t.Width,
+		Height:    1,
+		StartLine: SLoc{0, 0},
+		StartCol:  0,
+	}
+}
+
+func (t *TransWindow) Scroll(s SLoc, n int) SLoc        { return s }
+func (t *TransWindow) Diff(s1, s2 SLoc) int             { return 0 }
+func (t *TransWindow) SLocFromLoc(loc buffer.Loc) SLoc  { return SLoc{0, 0} }
+func (t *TransWindow) VLocFromLoc(loc buffer.Loc) VLoc  { return VLoc{SLoc{0, 0}, loc.X} }
+func (t *TransWindow) LocFromVLoc(vloc VLoc) buffer.Loc { return buffer.Loc{vloc.VisualX, 0} }
+
+func (t *TransWindow) Clear() {
+	for x := 0; x < t.Width; x++ {
+		screen.SetContent(x, t.Y, ' ', nil, config.DefStyle)
+	}
+}
+
+const transformLabel = "Transform: "
+
+func (t *TransWindow) Display() {
+
+	x := 0
+
+	for _, c := range transformLabel {
+		screen.SetContent(x, t.Y, c, nil, t.defStyle())
+		x += runewidth.RuneWidth(c)
+	}
+
+	for _, c := range t.Buffer.Line(0) {
+		screen.SetContent(x, t.Y, c, nil, t.defStyle())
+		x += runewidth.RuneWidth(c)
+	}
+
+	if t.TransBuf.HasFocus {
+		c := t.GetActiveCursor().Loc
+		screen.ShowCursor(len(transformLabel)+c.X, t.Y)
+	}
+}
+
+func (t *TransWindow) defStyle() tcell.Style {
+	style := config.DefStyle.
+		Foreground(tcell.ColorWhite).
+		Background(tcell.ColorGray)
+
+	return style
+}

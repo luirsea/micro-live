@@ -1118,30 +1118,8 @@ func (h *BufPane) Search(str string, useRegex bool, searchDown bool) error {
 
 // LH TODO make a dedicated action for transforms
 func (h *BufPane) SpawnMultiCursorSelect() bool {
+	TransBar.StartTransform(h.Buf)
 
-	tc := NewTransformChain(h.Buf)
-	tc.UpdateDisplay()
-
-	t := time.Now()
-
-	eventCallback := func(resp string) {
-
-		if time.Since(t)/time.Millisecond > config.TransformThreshold {
-
-			updated, err := tc.Exec(resp)
-
-			if updated {
-				tc.UpdateDisplay()
-			}
-
-			if err != nil {
-				h.Buf.Insert(buffer.Loc{0, 0}, "<"+err.Error()+">")
-			}
-		}
-		t = time.Now()
-	}
-
-	InfoBar.Prompt("Tranform:", "", "Transform", eventCallback, nil)
 	return true
 }
 
@@ -2004,7 +1982,7 @@ func (h *BufPane) QuitAll() bool {
 // AddTab adds a new tab with an empty buffer
 func (h *BufPane) AddTab() bool {
 	width, height := screen.Screen.Size()
-	iOffset := config.GetInfoBarOffset()
+	iOffset := config.GetGlobalBarsOffset()
 	b := buffer.NewBufferFromString("", "", buffer.BTDefault)
 	tp := NewTabFromBuffer(0, 0, width, height-iOffset, b)
 	Tabs.AddTab(tp)

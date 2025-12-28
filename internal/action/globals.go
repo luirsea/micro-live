@@ -5,12 +5,16 @@ import "github.com/zyedidia/micro/v2/internal/buffer"
 // InfoBar is the global info bar.
 var InfoBar *InfoPane
 
+// TransBar is the global transformation bar
+var TransBar *TransPane
+
 // LogBufPane is a global log buffer.
 var LogBufPane *BufPane
 
 // InitGlobals initializes the log buffer and the info bar
 func InitGlobals() {
 	InfoBar = NewInfoBar()
+	TransBar = NewTransBar()
 	buffer.LogBuf = buffer.NewBufferFromString("", "", buffer.BTLog)
 	buffer.LogBuf.SetName("Log")
 }
@@ -18,6 +22,10 @@ func InitGlobals() {
 // GetInfoBar returns the infobar pane
 func GetInfoBar() *InfoPane {
 	return InfoBar
+}
+
+func WriteLogLine(s string) {
+	WriteLog(s + "\n")
 }
 
 // WriteLog writes a string to the log buffer

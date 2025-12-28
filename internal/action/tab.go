@@ -23,7 +23,7 @@ type TabList struct {
 // for each buffer
 func NewTabList(bufs []*buffer.Buffer) *TabList {
 	w, h := screen.Screen.Size()
-	iOffset := config.GetInfoBarOffset()
+	iOffset := config.GetGlobalBarsOffset()
 	tl := new(TabList)
 	tl.List = make([]*Tab, len(bufs))
 	if len(bufs) > 1 {
@@ -86,8 +86,9 @@ func (t *TabList) RemoveAll() {
 // that into account
 func (t *TabList) Resize() {
 	w, h := screen.Screen.Size()
-	iOffset := config.GetInfoBarOffset()
-	InfoBar.Resize(w, h-1)
+	iOffset := config.GetGlobalBarsOffset()
+	InfoBar.Resize(w, h-2)
+	TransBar.Resize(w, h-1)
 	if len(t.List) > 1 {
 		for _, p := range t.List {
 			p.Y = 1
