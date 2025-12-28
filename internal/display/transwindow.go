@@ -3,11 +3,11 @@ package display
 import (
 	runewidth "github.com/mattn/go-runewidth"
 	"github.com/micro-editor/tcell/v2"
+	"github.com/zyedidia/micro/v2/internal/action"
 	"github.com/zyedidia/micro/v2/internal/buffer"
 	"github.com/zyedidia/micro/v2/internal/config"
 	"github.com/zyedidia/micro/v2/internal/screen"
 	"github.com/zyedidia/micro/v2/internal/transforms"
-	"github.com/zyedidia/micro/v2/internal/util"
 )
 
 type TransWindow struct {
@@ -44,10 +44,7 @@ func (t *TransWindow) SetActive(b bool) {}
 func (t *TransWindow) IsActive() bool   { return true }
 
 func (t *TransWindow) LocFromVisual(vloc buffer.Loc) buffer.Loc {
-	c := t.TransBuf.GetActiveCursor()
-	l := t.TransBuf.LineBytes(0)
-	n := util.CharacterCountInString(t.TransBuf.Arg)
-	return buffer.Loc{c.GetCharPosInLine(l, vloc.X-n), 0}
+	return buffer.Loc{-1, -1}
 }
 
 func (t *TransWindow) BufView() View {
@@ -75,7 +72,7 @@ func (t *TransWindow) Clear() {
 
 const transformLabel = "Transform: "
 
-func (t *TransWindow) Display() {
+func (t *TransWindow) Display(tc *action.Transform_Chain) {
 
 	x := 0
 

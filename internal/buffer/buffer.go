@@ -79,6 +79,9 @@ type SharedBuffer struct {
 	// Name of the buffer on the status line
 	name string
 
+	// Additional path used for syntax highlighting
+	HighLightingPath string
+
 	toStdout bool
 
 	// Settings customized by the user
@@ -355,7 +358,11 @@ func NewBufferFromString(text, path string, btype BufType) *Buffer {
 // Places the cursor at startcursor. If startcursor is -1, -1 places the
 // cursor at an autodetected location (based on savecursor or :LINE:COL)
 func NewBuffer(r io.Reader, size int64, path string, btype BufType, cmd Command) *Buffer {
-	
+	return NewBufferExternded(r, size, path, "", btype, cmd)
+}
+
+func NewBufferExternded(r io.Reader, size int64, path string, highlighterPath string, btype BufType, cmd Command) *Buffer {
+
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		absPath = path
@@ -381,6 +388,7 @@ func NewBuffer(r io.Reader, size int64, path string, btype BufType, cmd Command)
 
 		b.AbsPath = absPath
 		b.Path = path
+		b.HighLightingPath = highlighterPath
 
 		b.Settings = config.DefaultCommonSettings()
 		b.LocalSettings = make(map[string]bool)
@@ -867,6 +875,9 @@ func (b *Buffer) UpdateRules() {
 			if header.MatchFileName(b.Path) {
 				matchedFileName = true
 			}
+			if header.MatchFileName(b.HighLightingPath) {
+				matchedFileName = true
+			}
 			if len(fnameMatches) == 0 && header.MatchFileHeader(b.lines[0].data) {
 				matchedFileHeader = true
 			}
@@ -919,6 +930,9 @@ func (b *Buffer) UpdateRules() {
 
 			if ft == "unknown" || ft == "" {
 				if header.MatchFileName(b.Path) {
+					fnameMatches = append(fnameMatches, syntaxFileInfo{header, f.Name(), nil})
+				}
+				if header.MatchFileName(b.HighLightingPath) {
 					fnameMatches = append(fnameMatches, syntaxFileInfo{header, f.Name(), nil})
 				}
 				if len(fnameMatches) == 0 && header.MatchFileHeader(b.lines[0].data) {

@@ -2,7 +2,6 @@ package action
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"os/exec"
 	"strings"
@@ -59,7 +58,7 @@ func NewTransform(raw string) *Transform {
 	}
 }
 
-func (t *Transform) Exec(inBuf *buffer.Buffer, n int) (outBuf *buffer.Buffer, err error) {
+func (t *Transform) Exec(inBuf *buffer.Buffer, highlighterPath string) (outBuf *buffer.Buffer, err error) {
 	var cmd *exec.Cmd
 	if cmd, err = t.getCmd(); err != nil {
 		return
@@ -90,8 +89,8 @@ func (t *Transform) Exec(inBuf *buffer.Buffer, n int) (outBuf *buffer.Buffer, er
 		io.Writer.Write(stdin, inBuf.LineArray.Bytes())
 	}()
 
-	outBuf = buffer.NewBuffer(stdout, 0, "", buffer.BTDefault, *new(buffer.Command))
-	outBuf.SetName(fmt.Sprintf("[%d]%s", n, inBuf.GetName()))
+	outBuf = buffer.NewBufferExternded(stdout, 0, "", highlighterPath, buffer.BTDefault, *new(buffer.Command))
+	outBuf.SetName(inBuf.GetName())
 
 	slurp, _ := io.ReadAll(stderr)
 

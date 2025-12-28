@@ -292,6 +292,7 @@ func exit(rc int) {
 
 func main() {
 
+	time.Sleep(10 * time.Second)
 	defer func() {
 		if util.Stdout.Len() > 0 {
 			fmt.Fprint(os.Stdout, util.Stdout.String())

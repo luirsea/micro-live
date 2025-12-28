@@ -9,8 +9,6 @@ import (
 type TransBuf struct {
 	*buffer.Buffer
 
-	Arg string
-
 	HasFocus bool
 
 	// LH TODO consider History UX
