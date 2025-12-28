@@ -2,6 +2,7 @@
 See `LH TODO`s in code as well
 
 ## Bugs
+- Ctrl+Q binding crashes in transbar
 
 ## Now
 - Support for more transform types

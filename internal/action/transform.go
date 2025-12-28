@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/kballard/go-shellquote"
 	"github.com/zyedidia/micro/v2/internal/buffer"
 )
 
@@ -23,7 +24,7 @@ const (
 type Transform struct {
 	raw   string
 	cType CommandType
-	args  string
+	args  []string
 }
 
 func NewTransform(raw string) *Transform {
@@ -33,24 +34,29 @@ func NewTransform(raw string) *Transform {
 
 	t.raw = raw
 
-	split := strings.SplitN(raw, " ", 2)
-
-	if len(split) < 2 {
+	if args, err := shellquote.Split(raw); err != nil {
+		// LH TODO do something with this error?
 		t.cType = Unknown
+		return t
 	} else {
-		switch strings.ToLower(split[0]) {
-		case "grep":
-			t.cType = Grep
-			t.args = split[1]
-		case "sed":
-			t.cType = Sed
-			t.args = split[1]
-		default:
-			t.cType = Unknown
-		}
-	}
 
-	return t
+		if len(args) < 2 {
+			t.cType = Unknown
+		} else {
+			switch strings.ToLower(args[0]) {
+			case "grep":
+				t.cType = Grep
+				t.args = args[1:]
+			case "sed":
+				t.cType = Sed
+				t.args = args[1:]
+			default:
+				t.cType = Unknown
+			}
+		}
+
+		return t
+	}
 }
 
 func (t *Transform) Exec(inBuf *buffer.Buffer, n int) (outBuf *buffer.Buffer, err error) {
@@ -110,9 +116,9 @@ func (t *Transform) getCmd() (*exec.Cmd, error) {
 	switch t.cType {
 	case Grep:
 		// LH TODO enable grep colouring matches
-		cmd = *exec.Command("grep", t.args)
+		cmd = *exec.Command("grep", t.args...)
 	case Sed:
-		cmd = *exec.Command("sed", t.args)
+		cmd = *exec.Command("sed", t.args...)
 	default:
 		return nil, errors.New("Unknown command")
 	}
