@@ -35,6 +35,7 @@ func NewTabList(bufs []*buffer.Buffer) *TabList {
 	}
 	tl.TabWindow = display.NewTabWindow(w, 0)
 	tl.Names = make([]string, len(bufs))
+	tl.Colours = make([]tcell.Color, len(bufs))
 
 	return tl
 }
@@ -43,8 +44,10 @@ func NewTabList(bufs []*buffer.Buffer) *TabList {
 // correct
 func (t *TabList) UpdateNames() {
 	t.Names = t.Names[:0]
+	t.Colours = t.Colours[:0]
 	for _, p := range t.List {
 		t.Names = append(t.Names, p.Panes[p.active].Name())
+		t.Colours = append(t.Colours, p.colour)
 	}
 }
 
@@ -246,6 +249,9 @@ type Tab struct {
 	resizing *views.Node // node currently being resized
 	// captures whether the mouse is released
 	release bool
+
+	// Optional, a colour to display the tab with
+	colour tcell.Color
 }
 
 // NewTabFromBuffer creates a new tab from the given buffer
@@ -353,6 +359,10 @@ func (t *Tab) SetActive(i int) {
 			p.SetActive(false)
 		}
 	}
+}
+
+func (t *Tab) SetColor(c tcell.Color) {
+	t.colour = c
 }
 
 // AddPane adds a pane at a given index

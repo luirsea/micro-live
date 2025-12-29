@@ -3,7 +3,6 @@ package display
 import (
 	runewidth "github.com/mattn/go-runewidth"
 	"github.com/micro-editor/tcell/v2"
-	"github.com/zyedidia/micro/v2/internal/action"
 	"github.com/zyedidia/micro/v2/internal/buffer"
 	"github.com/zyedidia/micro/v2/internal/config"
 	"github.com/zyedidia/micro/v2/internal/screen"
@@ -72,7 +71,11 @@ func (t *TransWindow) Clear() {
 
 const transformLabel = "Transform: "
 
-func (t *TransWindow) Display(tc *action.Transform_Chain) {
+func (t *TransWindow) Display() {
+	t.DisplayWithTrivia(nil)
+}
+
+func (t *TransWindow) DisplayWithTrivia(tc *transforms.Transform_Chain) {
 
 	x := 0
 
@@ -81,8 +84,30 @@ func (t *TransWindow) Display(tc *action.Transform_Chain) {
 		x += runewidth.RuneWidth(c)
 	}
 
-	for _, c := range t.Buffer.Line(0) {
-		screen.SetContent(x, t.Y, c, nil, t.defStyle())
+	// Skip the nil transform
+	curTransform := 1
+	inTransform := false
+
+	style := t.defStyle()
+
+	// LH TODO this is getting a little deep, consider breaking up into sup function
+	for i, c := range t.Buffer.Line(0) {
+		if tc != nil && curTransform < len(tc.Transforms) {
+			curTrivia := tc.Transforms[curTransform].Trivia
+			if inTransform && i > curTrivia.End {
+				style = t.defStyle()
+				// We've hit the end of this transform start looking for the start of the next
+				curTransform++
+				inTransform = false
+			} else if !inTransform && i >= curTrivia.Start {
+				style = t.defStyle().Background(curTrivia.Colour)
+				inTransform = true
+			}
+		} else {
+			style = t.defStyle()
+		}
+
+		screen.SetContent(x, t.Y, c, nil, style)
 		x += runewidth.RuneWidth(c)
 	}
 
@@ -93,9 +118,7 @@ func (t *TransWindow) Display(tc *action.Transform_Chain) {
 }
 
 func (t *TransWindow) defStyle() tcell.Style {
-	style := config.DefStyle.
-		Foreground(tcell.ColorWhite).
-		Background(tcell.ColorGray)
+	style := config.DefStyle
 
 	return style
 }

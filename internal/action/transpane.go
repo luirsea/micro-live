@@ -12,20 +12,22 @@ import (
 type TransPane struct {
 	*BufPane
 	*transforms.TransBuf
-	TransChain *Transform_Chain
+	TransChain  *transforms.Transform_Chain
+	transWindow *display.TransWindow
 }
 
-func NewTranPane(tb *transforms.TransBuf, w display.BWindow, tab *Tab) *TransPane {
+func NewTranPane(tb *transforms.TransBuf, w *display.TransWindow, tab *Tab) *TransPane {
 	tp := new(TransPane)
 	tp.TransBuf = tb
+	tp.transWindow = w
 	tp.BufPane = NewBufPane(tb.Buffer, w, tab)
-	tp.TransChain = NewTransformChain(buffer.NewBufferFromString("<no buffer open to transform>", "", buffer.BTDefault))
+	tp.TransChain = transforms.NewTransformChain(buffer.NewBufferFromString("<no buffer open to transform>", "", buffer.BTDefault))
 
 	return tp
 }
 
 func (tp *TransPane) StartTransform(b *buffer.Buffer) {
-	tp.TransChain = NewTransformChain(b)
+	tp.TransChain = transforms.NewTransformChain(b)
 	tp.HasFocus = true
 }
 
@@ -33,6 +35,10 @@ func NewTransBar() *TransPane {
 	tb := transforms.NewBuffer()
 	w := display.NewTransWindow(tb)
 	return NewTranPane(tb, w, nil) // LH TODO the nil tab breaks defualt bufpane binds, (infobar does the same thing so I think it must use different binds)
+}
+
+func (tp *TransPane) Display() {
+	tp.transWindow.DisplayWithTrivia(tp.TransChain)
 }
 
 func (t *TransPane) Close() {
@@ -71,10 +77,11 @@ func (t *TransPane) UpdateTabs() {
 	width, height := screen.Screen.Size()
 	iOffset := config.GetGlobalBarsOffset()
 
-	transforms := t.TransChain.transforms
+	transforms := t.TransChain.Transforms
 
 	for _, tb := range transforms {
-		tp := NewTabFromBuffer(0, 0, width, height-iOffset, tb.outBuf)
+		tp := NewTabFromBuffer(0, 0, width, height-iOffset, tb.Buffer())
+		tp.SetColor(tb.Trivia.Colour)
 		Tabs.AddTab(tp)
 	}
 

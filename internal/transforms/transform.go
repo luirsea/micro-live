@@ -1,4 +1,4 @@
-package action
+package transforms
 
 import (
 	"errors"
@@ -58,7 +58,7 @@ func NewTransform(raw string) *Transform {
 	}
 }
 
-func (t *Transform) Exec(inBuf *buffer.Buffer, highlighterPath string) (outBuf *buffer.Buffer, err error) {
+func (t *Transform) Exec(inBuf *buffer.Buffer, highlighterPath string, name string) (outBuf *buffer.Buffer, err error) {
 	var cmd *exec.Cmd
 	if cmd, err = t.getCmd(); err != nil {
 		return
@@ -90,7 +90,7 @@ func (t *Transform) Exec(inBuf *buffer.Buffer, highlighterPath string) (outBuf *
 	}()
 
 	outBuf = buffer.NewBufferExternded(stdout, 0, "", highlighterPath, buffer.BTDefault, *new(buffer.Command))
-	outBuf.SetName(inBuf.GetName())
+	outBuf.SetName(name)
 
 	slurp, _ := io.ReadAll(stderr)
 
@@ -122,6 +122,20 @@ func (t *Transform) getCmd() (*exec.Cmd, error) {
 		return nil, errors.New("Unknown command")
 	}
 	return &cmd, nil
+}
+
+func (t *Transform) CommandLabel() string {
+	var l string
+	switch t.cType {
+	case Grep:
+		l = "Grep"
+	case Sed:
+		l = "Sed"
+	default:
+		l = "Unknown"
+	}
+
+	return l
 }
 
 func (t *Transform) Matches(raw string) bool {

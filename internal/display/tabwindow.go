@@ -15,6 +15,7 @@ type TabWindow struct {
 	Y       int
 	Width   int
 	hscroll int
+	Colours []tcell.Color
 }
 
 func NewTabWindow(w int, y int) *TabWindow {
@@ -113,8 +114,13 @@ func (w *TabWindow) Display() {
 		return tabBarStyle, tabBarActiveStyle
 	}
 
-	draw := func(r rune, n int, active bool, reversed bool) {
+	draw := func(r rune, n int, active bool, reversed bool, colour tcell.Color) {
 		tabBarStyle, tabBarActiveStyle := reverseStyles(reversed)
+
+		if colour != 0 {
+			tabBarStyle = tabBarStyle.Background(colour)
+			tabBarActiveStyle = tabBarActiveStyle.Background(colour)
+		}
 
 		style := tabBarStyle
 		if active {
@@ -142,14 +148,20 @@ func (w *TabWindow) Display() {
 	}
 
 	for i, n := range w.Names {
-		if i == w.active {
-			draw('[', 1, true, tabCharHighlight)
-		} else {
-			draw(' ', 1, false, tabCharHighlight)
+		var c tcell.Color
+		c = 0
+		if i < len(w.Colours) {
+			c = w.Colours[i]
 		}
 
-		for _, c := range n {
-			draw(c, 1, i == w.active, tabCharHighlight)
+		if i == w.active {
+			draw('[', 1, true, tabCharHighlight, c)
+		} else {
+			draw(' ', 1, false, tabCharHighlight, 0)
+		}
+
+		for _, char := range n {
+			draw(char, 1, i == w.active, tabCharHighlight, c)
 		}
 
 		if i == len(w.Names)-1 {
@@ -157,11 +169,12 @@ func (w *TabWindow) Display() {
 		}
 
 		if i == w.active {
-			draw(']', 1, true, tabCharHighlight)
-			draw(' ', 2, true, globalTabReverse)
+			draw(']', 1, true, tabCharHighlight, c)
+			draw(' ', 2, true, globalTabReverse, 0)
 		} else {
-			draw(' ', 1, false, tabCharHighlight)
-			draw(' ', 2, false, globalTabReverse)
+			draw(' ', 1, false, tabCharHighlight, 0)
+			draw(' ', 2, true, globalTabReverse, 0)
+
 		}
 
 		if x >= w.Width {
@@ -170,6 +183,6 @@ func (w *TabWindow) Display() {
 	}
 
 	if x < w.Width {
-		draw(' ', w.Width-x, false, globalTabReverse)
+		draw(' ', w.Width-x, false, globalTabReverse, 0)
 	}
 }
